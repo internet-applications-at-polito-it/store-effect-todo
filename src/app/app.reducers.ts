@@ -1,55 +1,65 @@
 import { ActionReducerMap, Action } from '@ngrx/store';
-import { LightSwitchActionTypes, LightSwitchActions } from './app.actions';
+import { TodoActionTypes, TodoActions } from './app.actions';
 import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { Todo } from './app.model';
 
-// I can remove LightSwitch prefix if moved in a module
-// import * as fromLightSwitch from 'light-switch.reducers';
+// I can remove Todo prefix if moved in a module
+// import * as fromTodo from 'light-switch.reducers';
 // reducers becomes
-// { lightSwitch: fromLightSwitch.reducer }
+// { todo: fromTodo.reducer }
 // selectors
-// fromLightSwitch.getLightcolor
+// fromTodo.getLightcolor
 
 export interface AppState {
-  lightSwitch: LightSwitchState;
+  todo: TodoState;
 }
-export interface LightSwitchState {
-  lightcolor: string;
+export interface TodoState {
+  data: Array<Todo>;
+  pending: boolean;
+  error: string;
 }
 
-const initialLightSwitchState = {
-    lightcolor: 'off'
+const initialTodoState = {
+    data: [],
+    pending: false,
+    error: null
 };
 const initialAppState: AppState = {
-    lightSwitch: initialLightSwitchState
+    todo: initialTodoState
 };
 
 // it is a MAP object
 // reducers properties must match with AppState properties
 export const reducers: ActionReducerMap<AppState> = {
-  lightSwitch: lightSwitchReducer
+  todo: todoReducer
 };
 
-// reducer called with a scoped state (not App, but LightSwitch)
-function lightSwitchReducer(state: LightSwitchState = initialLightSwitchState, action: LightSwitchActions): LightSwitchState {
+// reducer called with a scoped state (not App, but Todo)
+function todoReducer(state: TodoState = initialTodoState, action: TodoActions): TodoState {
     console.log('reducer - ' +
-      'state lightcolor: ' + JSON.stringify(state) + ', ' +
+      'state title: ' + JSON.stringify(state) + ', ' +
       'action: ' + JSON.stringify(action)
     );
     switch (action.type) {
-        case LightSwitchActionTypes.CHANGE:
-            return Object.assign({}, state, {lightcolor: action.payload});
+        case TodoActionTypes.GET_TODO_COLLECTION:
+            // mark as pending because of async request as side-effect
+            return Object.assign({}, state, {pending: true, error: null, data: []});
+        case TodoActionTypes.GET_TODO_COLLECTION_SUCCESS:
+            return Object.assign({}, state, {data: action.payload, pending: false});
+        case TodoActionTypes.GET_TODO_COLLECTION_ERROR:
+            return Object.assign({}, state, {pending: false, error: 'Error'});
         default:
             return state;
     }
 }
 
-export const getLightSwitchState = createFeatureSelector<LightSwitchState>('lightSwitch');
+export const getTodoState = createFeatureSelector<TodoState>('todo');
 
-export const getLightSwitchLightcolor = createSelector(
-    getLightSwitchState,
-    (state: LightSwitchState) => {
-        console.log('getLightSwitchLightcolor: ' + JSON.stringify(state));
-        return state.lightcolor;
+export const getTodos = createSelector(
+    getTodoState,
+    (state: TodoState) => {
+        console.log('getTodos selector: ' + JSON.stringify(state));
+        return state.data;
     }
   );
 

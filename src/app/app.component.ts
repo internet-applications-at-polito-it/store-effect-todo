@@ -1,27 +1,33 @@
-import { Component  } from '@angular/core';
+import { Component, OnInit  } from '@angular/core';
 import { Store, select } from '@ngrx/store';
 import { Observable } from 'rxjs';
 
-import { AppState, getLightSwitchLightcolor } from './app.reducers';
-import { LightSwitchChangeAction } from './app.actions';
-import {FormsModule} from '@angular/forms';
+import { TodoState } from './app.reducers';
+import { GetTodosAction } from './app.actions';
+import { FormsModule } from '@angular/forms';
+import { Todo } from './app.model';
 
 @Component({
   selector: 'app-root',
   template: `
-  <p><input (change)="onLightSwitchChange($event.target.value)"></p>
-  <p>Value: {{lightcolor$|async}}</p>
+  <div *ngIf="todo$ | async as todos">
+  <p *ngIf="todos.pending">Spinner...</p>
+  <ul>
+    <li *ngFor="let todo of todos.data">{{todo.title}}</li>
+  </ul>
+  <p *ngIf="todos.error">Error: {{todos.error}}</p>
+  {{ todos | json }}
+  </div>
   `
 })
-export class AppComponent  {
-  lightcolor$: Observable<string>;
+export class AppComponent implements OnInit {
+  todo$: Observable<TodoState>;
 
-  constructor(private store: Store<AppState>) {
-    this.lightcolor$ = store.pipe(select(getLightSwitchLightcolor));
+  constructor(private store: Store<TodoState>) { }
+
+  ngOnInit() {
+    this.store.dispatch(new GetTodosAction());
+    this.todo$ = this.store.select('todo');
   }
 
-  onLightSwitchChange(color: string) {
-    console.dir(color);
-    this.store.dispatch( new LightSwitchChangeAction(color));
-  }
 }
